@@ -15,6 +15,8 @@ import java.nio.file.StandardCopyOption;
 
 public class Spark_SQL_JSON {
     public static void main(String[] args) {
+        System.out.println("Gebündelte Daten Eco-Counter Fahrradzählstellen Baden-Württemberg.");
+
         String url2 = "https://mobidata-bw.de/daten/eco-counter/eco_counter_fahrradzaehler.json";
 
         Spark_SQL_JSON a = new Spark_SQL_JSON();

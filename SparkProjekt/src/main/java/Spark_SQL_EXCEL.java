@@ -13,6 +13,7 @@ import java.nio.file.StandardCopyOption;
 public class Spark_SQL_EXCEL {
     public static void main(String[] args) throws IOException {
 
+        System.out.println("Datensatz zu Weiterbildungsveranstaltungen die im Raum Berlin angeboten werden.");
         // Die URL zu der Excel-Datei aus dem Internet
         String url = "https://www.berlin.de/sen/arbeit/weiterbildung/bildungszeit/suche/index.php/index/all.xls?q=";
 
