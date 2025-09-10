@@ -1,20 +1,13 @@
 
-// dieses Programm soll ein Histogram aus einer bestimmten Tabellenspalte einer Exceldatei
-// erstellen und abbilden
-// https://www.daten-bw.de/web/guest/suchen/-/details/strassenverkehrszahlungen-stadt-ravensburg
-// Programm morgen früh zuerst ausführen und Fehlersuche
-
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.*;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import org.apache.spark.sql.functions;
+import org.knowm.xchart.CategoryChart;
+import org.knowm.xchart.CategoryChartBuilder;
+import org.knowm.xchart.SwingWrapper;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Histogram {
     public static void main(String[] args) {
@@ -22,8 +15,7 @@ public class Histogram {
         // Die URL zu der Excel-Datei aus dem Internet
         String url = "https://mobidata-bw.de/daten/portal/RV_Zaehl/Verkehrszaehlungen_RV.xlsx";
 
-        // Methode zur Verarbeitung der Tabelle wird mit drei unterschiedlichen
-        // Queries aufgerufen
+        // Methode zur Verarbeitung der Tabelle und Erstellung des Histograms
         Histogram a = new Histogram();
         a.erstelleHistogram(url);
     }
@@ -50,6 +42,47 @@ public class Histogram {
         df.show(15);
 
         df.createOrReplaceTempView("excel_table");
+
+
+        //----------------------------------------------------------------------------------------------//
+        // Datenaufbereitung
+
+        // Umwandlung der Inhalte in Spalte Datum_1 in das Format YYYY-MM
+        // umbenennen der geänderten Spalte in "Datum_1_neu"
+        Dataset<Row> dfMitMonat = df.withColumn("Datum_1_neu",
+                functions.date_format(df.col("Datum_1"), "yyyy-MM"));
+
+        // Häufigkeit der Daten ermitteln nach JahrMonat
+        Dataset<Row> histogramData = dfMitMonat.groupBy("Datum_1_neu").count().orderBy("Datum_1_neu");
+
+        List<String> xData = new ArrayList<>();
+        List<Number> yData = new ArrayList<>();
+
+        // Ermitteln der Häufigkeit des Datums nach YYYY-MM
+        for (Row row : histogramData.collectAsList()) {
+            String monat = row.getAs("Datum_1_neu");
+            Long count = row.getAs("count");
+
+            // leere Spalten nicht berücksichtigen
+            if (monat != null && count != null) {
+                xData.add(monat);
+                yData.add(count);
+            }
+        }
+
+        //--------------------------------------------------------------------------------------//
+        // Erstellung des Graphen
+        CategoryChart chart = new CategoryChartBuilder()
+                .width(800).height(600)
+                .title("Histogramm der Anzahl der Datenerhebungen nach Monat")
+                .xAxisTitle("Stichtag der Datenerhebung")
+                .yAxisTitle("Absolute Häufigkeit")
+                .build();
+
+        chart.addSeries("Häufigkeit nach Datum", xData, yData);
+
+        // Interface das Graphen erstellt
+        new SwingWrapper<>(chart).displayChart();
 
         spark.stop();
     }
